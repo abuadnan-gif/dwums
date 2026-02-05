@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 0 102 255;
+    --color-secondary: 16 185 129;
+    --color-accent: 139 92 246;
+    --color-surface: 255 255 255;
+    --color-background: 248 250 252;
+  }
+
+  .dark {
+    --color-primary: 59 130 246;
+    --color-secondary: 52 211 153;
+    --color-accent: 167 139 250;
+    --color-surface: 15 23 42;
+    --color-background: 2 6 23;
+  }
+
+  body {
+    @apply font-sans antialiased;
+  }
+}
+
+@layer components {
+  .glass-morphism {
+    @apply backdrop-blur-md bg-white/10 dark:bg-black/10 border border-white/20 dark:border-white/10;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-[#0066FF] to-[#8B5CF6] dark:from-[#3B82F6] dark:to-[#A78BFA] bg-clip-text text-transparent;
+  }
+
+  .elite-card {
+    @apply relative overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-gray-900 shadow-lg;
+  }
+
+  .elite-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-transparent via-white/5 dark:via-white/10 to-transparent pointer-events-none;
+  }
+
+  .btn-elite {
+    @apply relative overflow-hidden rounded-lg px-6 py-3 font-medium  ;
+    @apply bg-gradient-to-r from-[#0066FF] to-[#8B5CF6] dark:from-[#3B82F6] dark:to-[#A78BFA];
+    @apply text-white shadow-lg hover:shadow-xl;
+  }
+
+  .btn-elite::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full;
+    animation: shine 2s infinite;
+  }
+
+  .nav-item {
+    @apply flex items-center px-4 py-3 text-sm font-medium rounded-xl ;
+    @apply text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400;
+    @apply hover:bg-white/50 dark:hover:bg-white/5;
+  }
+
+  .nav-item.active {
+    @apply bg-gradient-to-r from-blue-500/10 to-purple-500/10;
+    @apply text-blue-600 dark:text-blue-400 border-l-4 border-blue-500 dark:border-blue-400;
+  }
+}
+
+@keyframes shine {
+  100% { transform: translateX(100%); }
+}
