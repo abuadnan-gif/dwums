@@ -15,7 +15,7 @@
 
       <!-- Main -->
       <main
-        class="flex-1 transition-all duration-300"
+        class="flex-1 transition-all duration-300 overflow-x-auto"
         :class="{
           'lg:ml-20': themeStore.sidebarCollapsed,
           'lg:ml-64': !themeStore.sidebarCollapsed

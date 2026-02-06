@@ -4,12 +4,15 @@ import axios from 'axios'
 import { ref } from 'vue'
 import { onMounted } from 'vue'
 import Icon from '@/components/Icon.vue'
-import { PenSquareIcon } from 'lucide-vue-next'
+
+import ThreeDotsButton from '@/components/ThreeDotsButton.vue'
 
 const showForm = ref(false)
 const loading = ref(false)
 const users = ref([])
 const openDropdown = ref(null)
+const errors = ref({})
+
 
 // Toggle dropdown per row
 const toggleDropdown = (userId) => {
@@ -29,43 +32,47 @@ const updateStatus = (userId, status) => {
 
   axios
     .patch(`http://localhost:8000/api/users/${userId}/status`, {
-      status: status,
+      status: status
     })
     .then(() => {
-      const user = users.value.find(u => u.id === userId)
+      const user = users.value.find((u) => u.id === userId)
       if (user) user.status = status
     })
-    .catch(err => {
+    .catch((err) => {
       console.error(err)
     })
 }
-const form = ref(
-  {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    role: '',
-    profile: null,
-
-  })
-
-
-const errors = ref({})
+const form = ref({
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  role: '',
+  profile: null
+})
 
 const handleFileChange = (e) => {
   form.value.profile = e.target.files[0]
 }
 
+const error = ref('')
 
 const fetchUsers = () => {
+  loading.value = true
+  error.value = ''
 
-  api.get('/users')
+  api
+    .get('/users')
     .then((res) => {
-      users.value = res.data
+      users.value = res.data.users
     })
     .catch(() => {
-      alert('Failed to load users')
+      error.value = 'Failed to load users'
+    })
+    .finally(() => {
+      setTimeout(() => {
+        loading.value = false
+      }, 2000)
     })
 }
 onMounted(() => {
@@ -75,7 +82,6 @@ onMounted(() => {
 const registerUser = () => {
   loading.value = true
   errors.value = {}
-
 
   const data = new FormData()
   data.append('first_name', form.value.first_name)
@@ -87,13 +93,12 @@ const registerUser = () => {
   if (form.value.profile) {
     data.append('profile', form.value.profile)
   }
-  api.post('/users', data, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  api
+    .post('/users', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     .then((res) => {
-      alert(
-        `User created!\nUser Code: ${res.data.user_code}\nPassword: ${res.data.password}`
-      )
+      alert(`User created!\nUser Code: ${res.data.user_code}\nPassword: ${res.data.password}`)
       fetchUsers()
       showForm.value = false
     })
@@ -107,21 +112,36 @@ const registerUser = () => {
     .finally(() => {
       loading.value = false
     })
-
 }
+
 </script>
 
 <template>
-  <div class=" p-6 text-gray-900 dark:text-gray-100">
+  <div class="p-6 text-gray-900 dark:text-gray-100">
     <div class="flex justify-between items-center mb-4">
       <h1 class="text-2xl font-bold">Users</h1>
-      <button @click="showForm = true" class="px-4 py-2 rounded-md font-semibold transition-colors duration-300
-               bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600">
+      <button
+        @click="showForm = true"
+        class="px-4 py-2 rounded-md font-semibold transition-colors duration-300 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600"
+      >
         Add User
       </button>
     </div>
-    <div class="overflow-x-auto">
-      <table class="w-full border border-gray-200 dark:border-gray-900">
+    <!-- Loading state -->
+    <div v-if="loading" class="flex justify-center py-10">
+      <div
+        class="w-6 h-6 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+      ></div>
+    </div>
+    <!-- Error -->
+    <div v-else-if="error" class="text-red-600 text-center py-6">
+      {{ error }}
+    </div>
+    <!-- Empty -->
+    <div v-else-if="users.length === 0" class="text-center py-6 text-gray-500">No users found</div>
+
+    <div v-else class="overflow-auto">
+      <table class="w-full min-w-[600px] border border-gray-200 dark:border-gray-900">
         <thead class="bg-gray-100 dark:bg-gray-800">
           <tr>
             <th class="p-3 border border-gray-200 dark:border-gray-700 text-left">Profile</th>
@@ -134,13 +154,14 @@ const registerUser = () => {
         </thead>
         <tbody>
           <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-        
-            <td class="p-3 border">
-              <img v-if="user.profile" :src="`http://localhost:8000/storage/${user.profile}`"
-                class="w-10 h-10 rounded-full object-cover" />
+            <td class="p-3 border border-gray-200 dark:border-gray-700">
+              <img
+                v-if="user.profile"
+                :src="`http://localhost:8000/storage/${user.profile}`"
+                class="w-10 h-10 rounded-full object-cover"
+              />
               <span v-else>-</span>
             </td>
-
 
             <td class="p-3 border border-gray-200 dark:border-gray-700">
               {{ user.first_name }} {{ user.last_name }}
@@ -150,35 +171,40 @@ const registerUser = () => {
             <td class="p-3 border border-gray-200 dark:border-gray-700">{{ user.phone }}</td>
             <td class="p-3 border border-gray-200 dark:border-gray-700">{{ user.role }}</td>
 
-     <td>
-      <ThreeDotsButton
-        :actions="[
-          { 
-            name: 'Edit', 
-            icon:PenSquareIcon,
-           
-          },
-           { 
-            name: 'Active',
-            icon: 'CheckCircleIcon',
-           
-           },
-            { 
-            name: 'Inactive',
-            icon: 'XCircleIcon',
-            
-           },
-
-          { 
-            name: 'Delete',
-            icon: 'TrashIcon',
-           
-           },
-
-        ]"
-      />
-    </td>
-
+            <td class="p-3 border border-gray-200 dark:border-gray-700">
+              <div class="relative inline-block"> 
+              <ThreeDotsButton
+                :actions="[
+                  {
+                    name: 'Edit',
+                    icon: 'PencilIcon', 
+                    color: 'info',
+                    onClick: () => editUser(user)
+                  },
+                  {
+                    name: 'Active',
+                    icon: 'CheckCircleIcon',
+                    color: 'success',
+                    onClick: () => updateStatus(user.id, 'active')
+                  },
+                  {
+                    name: 'Inactive',
+                    icon: 'XCircleIcon',
+                     color: 'warning',
+                    onClick: () => updateStatus(user.id, 'inactive')
+                  },
+                  {
+                    name: 'Delete',
+                    icon: 'TrashIcon',
+                    color: 'critical',
+                    onClick: () => deleteUser(user.id)
+                  }
+                ]"
+                 :is-open="openDropdown === user.id" 
+                  @toggle="toggleDropdown(user.id)" 
+              />
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -188,47 +214,67 @@ const registerUser = () => {
     <div v-if="showForm" class="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-lg p-6 relative">
         <!-- Close Button -->
-        <button @click="showForm = false"
-          class="absolute top-2 right-2 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100">
+        <button
+          @click="showForm = false"
+          class="absolute top-2 right-2 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100"
+        >
           ✕
         </button>
 
         <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Register User</h2>
 
         <form @submit.prevent="registerUser" class="space-y-4">
-          <input v-model="form.first_name" placeholder="First Name"
-            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
+          <input
+            v-model="form.first_name"
+            placeholder="First Name"
+            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          />
 
-          <input v-model="form.last_name" placeholder="Last Name"
-            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
-          <input v-model="form.email" placeholder="Email"
-            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
+          <input
+            v-model="form.last_name"
+            placeholder="Last Name"
+            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          />
+          <input
+            v-model="form.email"
+            placeholder="Email"
+            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          />
           <!-- <input
             v-model="form.password"
             type="password"
             placeholder="Password"
             class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           /> -->
-          <input v-model="form.phone" placeholder="Phone"
-            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
+          <input
+            v-model="form.phone"
+            placeholder="Phone"
+            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          />
 
-
-          <select v-model="form.role"
-            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-            <option disabled value="">
-              -- Select Role --
-            </option>
+          <select
+            v-model="form.role"
+            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          >
+            <option disabled value="">-- Select Role --</option>
             <option value="admin">Admin</option>
             <option value="customer">Customer</option>
             <option value="reader">Reader</option>
             <option value="manager">Manager</option>
           </select>
 
-          <input type="file" @change="handleFileChange" accept="image/*"
-            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
+          <input
+            type="file"
+            @change="handleFileChange"
+            accept="image/*"
+            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          />
 
-          <button type="submit" :disabled="loading"
-            class="w-full px-4 py-2 rounded-md font-semibold bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-600 transition-colors">
+          <button
+            type="submit"
+            :disabled="loading"
+            class="w-full px-4 py-2 rounded-md font-semibold bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-600 transition-colors"
+          >
             {{ loading ? 'Registering...' : 'Register User' }}
           </button>
         </form>
