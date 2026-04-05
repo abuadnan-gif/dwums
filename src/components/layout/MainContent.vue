@@ -26,4 +26,9 @@ import Footer from './Footer.vue'
 
 const themeStore = useThemeStore()
 const sidebarCollapsed = computed(() => themeStore.sidebarCollapsed)
+
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+userStore.loadFromLocalStorage()
 </script>

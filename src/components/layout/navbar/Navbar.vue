@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useThemeStore } from '../../../stores/theme'
+import api from '@/plugins/axios'
+import { useToast } from 'vue-toastification'
+const toast = useToast()
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.isDark)
@@ -9,7 +12,6 @@ const showProfile = ref(false)
 const showNotificationsOnHover = ref(false)
 const showProfileOnHover = ref(false)
 const logoError = ref(false)
-
 
 let notificationsHideTimer = null
 let profileHideTimer = null
@@ -154,6 +156,41 @@ onUnmounted(() => {
 
 import Icon from '@/components/Icon.vue'
 
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const logout = () => {
+  api
+    .post('/logout', null, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    .then((response) => {
+      // console.log(response.data.message);
+
+      // Clear localStorage
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+
+      // Redirect to login
+      toast.success('loged out')
+      router.push('/')
+    })
+    .catch((error) => {
+      toast.error('Logout failed:')
+
+      // Still remove localStorage and redirect even if server fails
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+
+      router.push('/')
+    })
+}
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 </script>
 
 <template>
@@ -417,30 +454,39 @@ import Icon from '@/components/Icon.vue'
                   @click="toggleProfile"
                   class="flex items-center space-x-3 p-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-all duration-300 group"
                 >
-                  <!-- Avatar -->
-                  <div class="relative">
+                  <div class="flex items-center space-x-3">
+                    <!-- Profile picture -->
                     <div
-                      class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-light via-accent-light to-secondary-light dark:from-primary-dark dark:via-accent-dark dark:to-secondary-dark flex items-center justify-center text-white font-semibold text-sm"
+                      v-if="userStore.user?.profile"
+                      class="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
                     >
-                      AU
+                      <img
+                        :src="`http://localhost:8000/storage/${userStore.user.profile}`"
+                        alt="Profile"
+                        class="w-full h-full object-cover"
+                      />
                     </div>
-                    <!-- Status Indicator -->
+
+                    <!-- Fallback initials -->
                     <div
-                      class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-success-light dark:bg-success-dark border-2 border-white dark:border-surface-dark"
-                    ></div>
+                      v-else
+                      class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-light via-accent-light to-secondary-light flex items-center justify-center text-white font-semibold text-lg flex-shrink-0"
+                    >
+                      {{ userStore.initials }}
+                    </div>
+
+                    <div class="min-w-0">
+                      <p class="font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                        {{ userStore.fullName }}
+                      </p>
+                      <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-1 truncate">
+                        {{ userStore.role }}
+                      </p>
+                    </div>
                   </div>
 
-                  <!-- User Info (Desktop) -->
-                  <div class="hidden lg:block text-left min-w-0">
-                    <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                      Admin User
-                    </p>
-                    <p class="text-xs text-neutral-600 dark:text-neutral-400 truncate">
-                      System Administrator
-                    </p>
-                  </div>
-
-                  <Icon name="ChevronDownIcon"
+                  <Icon
+                    name="ChevronDownIcon"
                     class="text-neutral-500 dark:text-neutral-400 transition-transform duration-300 flex-shrink-0"
                     :class="{ 'rotate-180': showProfile || showProfileOnHover }"
                   />
@@ -468,7 +514,7 @@ import Icon from '@/components/Icon.vue'
 
                     <div class="relative">
                       <!-- Profile Header -->
-                      <div class="p-4 border-b border-neutral-300 dark:border-neutral-700">
+                      <!-- <div class="p-4 border-b border-neutral-300 dark:border-neutral-700">
                         <div class="flex items-center space-x-3">
                           <div
                             class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-light via-accent-light to-secondary-light dark:from-primary-dark dark:via-accent-dark dark:to-secondary-dark flex items-center justify-center text-white font-semibold text-lg flex-shrink-0"
@@ -495,7 +541,7 @@ import Icon from '@/components/Icon.vue'
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </div> -->
 
                       <!-- Menu Items -->
                       <div class="py-2">
@@ -587,7 +633,8 @@ import Icon from '@/components/Icon.vue'
                       <!-- Logout -->
                       <div class="py-2">
                         <a
-                          href="#"
+                          href=""
+                          @click.prevent="logout"
                           class="flex items-center px-4 py-3 text-sm text-critical-light dark:text-critical-dark hover:bg-critical-light/10 dark:hover:bg-critical-dark/10 transition-colors group/menu"
                         >
                           <div

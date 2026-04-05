@@ -1,96 +1,71 @@
-<template>
-  <Card title="Quick Actions" subtitle="Frequently used operations" glow>
-    <div class="space-y-3">
-      <button
-        v-for="action in actions"
-        :key="action.id"
-        @click="handleAction(action.id)"
-        class="w-full flex items-center justify-between p-3 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 hover:border-primary-light/30 dark:hover:border-primary-dark/30 hover:bg-white/50 dark:hover:bg-white/5 transition-all group"
-      >
-        <div class="flex items-center">
-          <div :class="['p-2 rounded-lg mr-3', action.bgColor]">
-            <svg class="w-5 h-5" :class="action.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="action.icon" />
-            </svg>
-          </div>
-          <div class="text-left">
-            <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ action.title }}</p>
-            <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ action.description }}</p>
-          </div>
-        </div>
-        <svg class="w-5 h-5 text-neutral-400 group-hover:text-primary-light dark:group-hover:text-primary-dark transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </div>
-    
-    <!-- System Status -->
-    <div class="mt-6 pt-6 border-t border-neutral-200/50 dark:border-neutral-800/50">
-      <h4 class="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">System Status</h4>
-      <div class="space-y-3">
-        <div v-for="status in systemStatus" :key="status.id" class="flex items-center justify-between">
-          <div class="flex items-center">
-            <div :class="['w-2 h-2 rounded-full mr-2', status.active ? 'bg-success-light dark:bg-success-dark animate-pulse' : 'bg-neutral-300 dark:bg-neutral-700']"></div>
-            <span class="text-sm text-neutral-700 dark:text-neutral-300">{{ status.name }}</span>
-          </div>
-          <span :class="['text-xs px-2 py-1 rounded', status.active ? 'bg-success-light/10 text-success-light dark:bg-success-dark/10 dark:text-success-dark' : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400']">
-            {{ status.status }}
-          </span>
-        </div>
-      </div>
-    </div>
-  </Card>
-</template>
-
+<!-- components/dashboard/QuickActions.vue -->
 <script setup>
-import Card from '../ui/Card.vue'
-import { ref } from 'vue'
+import { computed } from 'vue'
 
-const actions = [
-  {
-    id: 1,
-    title: 'New Connection',
-    description: 'Register new applicant',
-    icon: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',
-    bgColor: 'bg-primary-light/10 dark:bg-primary-dark/10',
-    iconColor: 'text-primary-light dark:text-primary-dark',
-  },
-  {
-    id: 2,
-    title: 'Record Reading',
-    description: 'Submit meter reading',
-    icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-    bgColor: 'bg-success-light/10 dark:bg-success-dark/10',
-    iconColor: 'text-success-light dark:text-success-dark',
-  },
-  {
-    id: 3,
-    title: 'Generate Bill',
-    description: 'Create monthly invoice',
-    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-    bgColor: 'bg-accent-light/10 dark:bg-accent-dark/10',
-    iconColor: 'text-accent-light dark:text-accent-dark',
-  },
-  {
-    id: 4,
-    title: 'Issue Alert',
-    description: 'Send system notification',
-    icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.998-.833-2.732 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z',
-    bgColor: 'bg-warning-light/10 dark:bg-warning-dark/10',
-    iconColor: 'text-warning-light dark:text-warning-dark',
-  },
-]
+const props = defineProps({
+  role: String,
+  permissions: Array
+})
 
-const systemStatus = [
-  { id: 1, name: 'Billing System', status: 'Active', active: true },
-  { id: 2, name: 'Payment Gateway', status: 'Active', active: true },
-  { id: 3, name: 'Meter Reading API', status: 'Active', active: true },
-  { id: 4, name: 'SMS Gateway', status: 'Active', active: true },
-  { id: 5, name: 'Database Replica', status: 'Syncing', active: true },
-]
-
-const handleAction = (id) => {
-  // Handle action based on id
-  console.log('Action triggered:', id)
-}
+const quickActions = computed(() => {
+  const actions = {
+    'Admin': [
+      { name: 'New Application', icon: 'UserPlusIcon', route: '/admin/applicants/new', color: 'blue' },
+      { name: 'Create Estimation', icon: 'CalculatorIcon', route: '/admin/estimations/costs', color: 'green' },
+      { name: 'Add Staff', icon: 'UserGroupIcon', route: '/admin/staffs', color: 'purple' },
+      { name: 'Manage Roles', icon: 'ShieldCheckIcon', route: '/admin/system/roles', color: 'orange' }
+    ],
+    'Customer-Service': [
+      { name: 'New Application', icon: 'UserPlusIcon', route: '/admin/applicants/new', color: 'blue' },
+      { name: 'Verify Documents', icon: 'DocumentCheckIcon', route: '/admin/applicants/documents', color: 'yellow' },
+      { name: 'View Customers', icon: 'UsersIcon', route: '/admin/customers/all', color: 'green' }
+    ],
+    'Technical-Engineer': [
+      { name: 'New Estimation', icon: 'CalculatorIcon', route: '/admin/estimations/costs', color: 'blue' },
+      { name: 'View Work Orders', icon: 'ClipboardDocumentListIcon', route: '/admin/applicants/work-orders', color: 'green' },
+      { name: 'Check Materials', icon: 'CubeIcon', route: '/admin/materials', color: 'orange' }
+    ],
+    'Finance-Officer': [
+      { name: 'Process Payments', icon: 'CreditCardIcon', route: '/admin/billing/payments', color: 'blue' },
+      { name: 'Manage Tariffs', icon: 'ReceiptPercentIcon', route: '/admin/billing/tariffs', color: 'green' },
+      { name: 'View Reports', icon: 'ChartBarIcon', route: '/admin/reports/revenue', color: 'purple' }
+    ],
+    'Warehouse-Manager': [
+      { name: 'Add Material', icon: 'CubeIcon', route: '/admin/materials', color: 'blue' },
+      { name: 'Check Stock', icon: 'BuildingStorefrontIcon', route: '/admin/branch_material', color: 'orange' }
+    ],
+    'Compliance-Officer': [
+      { name: 'Verify Documents', icon: 'DocumentCheckIcon', route: '/admin/applicants/documents', color: 'blue' },
+      { name: 'View Applications', icon: 'UserPlusIcon', route: '/admin/applicants/new', color: 'green' }
+    ],
+    'Field-Technician': [
+      { name: 'My Work Orders', icon: 'ClipboardDocumentListIcon', route: '/admin/applicants/work-orders', color: 'blue' },
+      { name: 'Installations', icon: 'WrenchScrewdriverIcon', route: '/admin/estimations/installations', color: 'green' }
+    ]
+  }
+  
+  return actions[props.role] || actions['Customer-Service']
+})
 </script>
+
+<template>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
+    <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <router-link
+        v-for="action in quickActions"
+        :key="action.name"
+        :to="action.route"
+        class="flex flex-col items-center p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+      >
+        <div :class="[
+          'w-12 h-12 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform',
+          `bg-${action.color}-100 dark:bg-${action.color}-900/30`
+        ]">
+          <Icon :name="action.icon" :class="`w-6 h-6 text-${action.color}-600 dark:text-${action.color}-400`" />
+        </div>
+        <span class="text-sm text-gray-700 dark:text-gray-300">{{ action.name }}</span>
+      </router-link>
+    </div>
+  </div>
+</template>
